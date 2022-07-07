@@ -16,7 +16,7 @@ class Message():
     self.body = body
     self.sender = sender 
     # trained on Wikipedia 2014 corpus; can try other models
-    self.dim = 50
+    self.dim = dim
     self.glove = torchtext.vocab.GloVe(name="6B",
                               dim=self.dim)
 
