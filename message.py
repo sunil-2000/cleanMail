@@ -11,7 +11,7 @@ class Message():
   """
   Represents a message (subject, body, sender) data
   """
-  def __init__(self, subject, body, sender, dim=50):
+  def __init__(self, subject, body, sender, dim=50, gen_features=True):
     self.subject = subject
     self.body = body
     self.sender = sender 
@@ -21,6 +21,10 @@ class Message():
                               dim=self.dim)
 
     self.body_feature, self.subject_feature = None, None
+
+    if gen_features:
+      self.preprocess()
+      self.feature_extraction()
 
   def _remove_stop_words(self):
     """
