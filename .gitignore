@@ -3,3 +3,8 @@ token.json
 credentials.json
 
 __pycache__
+.vscode
+images
+
+# testing scripts
+test.py

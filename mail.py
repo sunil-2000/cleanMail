@@ -63,9 +63,3 @@ class Mail():
             except:
                 print('missing field from message')
                 pass
-
-# run script
-mail = Mail()
-messages = mail.get_messages(msg_count=50) # 50 api requests
-
-print(mail.messages)
