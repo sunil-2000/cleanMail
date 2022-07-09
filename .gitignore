@@ -5,6 +5,7 @@ credentials.json
 __pycache__
 .vscode
 images
+.vector_cache
 
 # testing scripts
 test.py
