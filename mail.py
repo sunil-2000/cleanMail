@@ -91,15 +91,16 @@ class Mail():
         #     return 
         labels = self.desc_labels if desc_labels else self.id_labels
 
-        km = KMeans(n_clusters=5).fit(self.B)
+        km = KMeans(n_clusters=4).fit(self.S)
         print(km.labels_)
-
+        # km.labels_ array where each element corresponds to row in self.B matrix 0th element -> 0th row
+        # value of each element im km.labels_ is cluster number assingment 
         clusters = {}
         for i in range(len(km.labels_)):
-            label = km.labels_[i]
-            if label not in clusters:
-                clusters[label] = labels[i]
+            cluster = km.labels_[i]
+            if cluster not in clusters:
+                clusters[cluster] = labels[i]
             else:
-                clusters[label].append(labels[i])
+                clusters[cluster].append(labels[i])
         
         pprint.pprint(clusters)

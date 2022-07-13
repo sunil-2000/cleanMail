@@ -19,6 +19,8 @@ mail.generate_mail_matrix()
 # perform kMeans
 mail.k_means()
 
+# dump results in text file
+
 
 ##### NEED TO CREATE METHOD TO PICKLE / CACHE emails , so don't have to 
 # run script everytime to get same data 
