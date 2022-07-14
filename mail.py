@@ -64,8 +64,8 @@ class Mail():
 
                 # append to message to messages list 
                 self.messages.append(Message(subject, body, sender, msg['id']))
-            except:
-                print('missing field from message')
+            except Exception as e:
+                print(e)
                 pass
     
     def generate_mail_matrix(self, dump_csv=False):
