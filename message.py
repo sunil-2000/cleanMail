@@ -5,7 +5,7 @@ import string
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-# if recieve errors uncomment next two lines 
+# if receive errors uncomment next two lines 
 # nltk.download('wordnet')
 # nltk.download('omw-1.4')
 
