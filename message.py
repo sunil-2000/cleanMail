@@ -2,12 +2,17 @@ import numpy as np
 import torch
 import torchtext
 import string 
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-# if receive errors uncomment next two lines 
-# nltk.download('wordnet')
-# nltk.download('omw-1.4')
+import nltk 
+
+try:
+  from nltk.tokenize import word_tokenize
+  from nltk.corpus import stopwords
+  from nltk.stem import WordNetLemmatizer
+except:
+  nltk.download('wordnet')
+  nltk.download('stopwords')
+  nltk.download('omw-1.4')
+  nltk.download('punkt')
 
 class Message():
   """
@@ -49,8 +54,8 @@ class Message():
     self.body = self.body.translate(str.maketrans('', '', string.punctuation))
     self.subject = self.subject.translate(str.maketrans('', '',string.punctuation))
     # tokenize
-    self.body = nltk.word_tokenize(self.body)
-    self.subject = nltk.word_tokenize(self.subject)
+    self.body = word_tokenize(self.body)
+    self.subject = word_tokenize(self.subject)
     # remove stop words
     # print(type(self.body) == list, type(self.subject) == list)
     self._remove_stop_words()
