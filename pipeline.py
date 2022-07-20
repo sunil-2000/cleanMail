@@ -17,7 +17,9 @@ messages = mail.get_messages(msg_count=50) # 50 api requests
 mail.generate_mail_matrix()
 
 # perform kMeans
-mail.k_means()
+# mail.k_means()
+mail.tf_idf(20)
+# print(out)
 
 # dump results in text file
 
