@@ -3,6 +3,7 @@ import torch
 import torchtext
 import string 
 import nltk 
+import re
 
 try:
   from nltk.tokenize import word_tokenize
@@ -20,6 +21,7 @@ class Message():
   """
   def __init__(self, subject, body, sender, uid, dim=100, gen_features=True):
     self.subject = subject
+    self.raw_subject = subject
     self.body = body
     self.sender = sender 
     self.uid = uid
@@ -53,6 +55,9 @@ class Message():
     # remove punctuation
     self.body = self.body.translate(str.maketrans('', '', string.punctuation))
     self.subject = self.subject.translate(str.maketrans('', '',string.punctuation))
+    # remove digits
+    self.body = re.sub(r'\d+', '', self.body)
+    self.subject = re.sub(r'\d+', '', self.subject)
     # tokenize
     self.body = word_tokenize(self.body)
     self.subject = word_tokenize(self.subject)
