@@ -65,7 +65,7 @@ class Mail(GoogleAuth):
         (used for prior to clustering algo)
         """
         self.id_labels = [m.uid for m in self.messages]
-        self.desc_labels = [m.subject for m in self.messages]
+        self.desc_labels = [m.raw_subject for m in self.messages]
         self.B = np.vstack([m.body_feature for m in self.messages])
         self.S = np.vstack([m.subject_feature for m in self.messages])
 
@@ -81,14 +81,15 @@ class Mail(GoogleAuth):
         labels = self.desc_labels if desc_labels else self.id_labels
 
         km = KMeans(n_clusters=4).fit(self.S)
-        print(km.labels_)
+        self.emails_by_cluster = km.labels_
+
         # km.labels_ array where each element corresponds to row in self.B matrix 0th element -> 0th row
         # value of each element im km.labels_ is cluster number assingment
         clusters = {}
         for i in range(len(km.labels_)):
             cluster = km.labels_[i]
             if cluster not in clusters:
-                clusters[cluster] = labels[i]
+                clusters[cluster] = [labels[i]]
             else:
                 clusters[cluster].append(labels[i])
 
