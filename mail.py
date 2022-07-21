@@ -133,6 +133,8 @@ class Mail(GoogleAuth):
         km = KMeans(n_clusters=k).fit(data)
         # km.labels_ array where each element corresponds to row in self.B
         #  matrix 0th element -> 0th row
+        self.emails_by_cluster = km.labels_
+
         # value of each element im km.labels_ is cluster number assingment
         clusters = {}
         for i in range(len(km.labels_)):

@@ -2,7 +2,6 @@ from mail import Mail
 import pprint
 from os import path
 
-# testing run script
 # 1. pull emails
 # 2. preprocess / clean text
 # 3. generate features from text
