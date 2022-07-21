@@ -9,3 +9,6 @@ images
 
 # testing scripts
 test.py
+
+*.csv
+*.pkl

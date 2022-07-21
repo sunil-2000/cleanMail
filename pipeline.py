@@ -1,48 +1,36 @@
 from mail import Mail
 import pprint
+from os import path
+
 # 1. pull emails
 # 2. preprocess / clean text
 # 3. generate features from text
 # 4. stack text vectors into matrix 
 # 5. run clustering algorithm 
 
-# # # run script
-mail = Mail()
+if path.exists('mail_pickle.pkl'):
+  # unpickle 
+  print("object has been cached... unpickling")
+  mail = Mail.unpickle_obj('mail_pickle.pkl')
+  # stack each message vector into matrix
+  mail.generate_mail_matrix(True)
+  # run models 
+  mail.k_means()
+  mail.tf_idf(5)
+  # do something with output of model(s)
+  pprint.pprint(mail.keywords_by_msg)
+else:
+  mail = Mail()
+  # method performs pre-processing on each email text (subject/body)
+  messages = mail.get_messages(msg_count=50) # 50 api requests
+  # stack each message vector into matrix
+  mail.generate_mail_matrix(True)
+  # run models 
+  mail.k_means()
+  mail.tf_idf(5)
+  # do something with output of model(s)
+  pprint.pprint(mail.keywords_by_msg)
+  # pickle object
+  Mail.pickle_obj(mail, "mail_pickle.pkl")
 
-# method performs pre-processing on each email text (subject/body)
-messages = mail.get_messages(msg_count=50) # 50 api requests
-
-# stack each message vector into matrix
-mail.generate_mail_matrix()
-
-# perform kMeans
-mail.k_means()
-
-# perform tf_idf
-# mail.tf_idf(20)
-
-# dump results in text 
-# for each cluster, print subject line of each email in cluster
-
-
-##### NEED TO CREATE METHOD TO PICKLE / CACHE emails , so don't have to 
-# run script everytime to get same data 
-
-
-
-# # build corpus IF we want to perform Tf-Idf on body text (might be unnecessary)
-# because corpus still relatively small 
-# corpus = []
-# for m in mail.messages:
-#   # after each m has been cleaned 
-#   corpus.extend(m.body)
-
-# for m in mail.messages:
-#   # perform feature extraction 
-#   m.feature_extraction(corpus)
-
-
-# print(mail.messages)
-
-
-# get emails, test feature eng pipeline, cluster
+# dump results in text file

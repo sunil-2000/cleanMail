@@ -1,8 +1,8 @@
 import numpy as np
 from sklearn.cluster import KMeans
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
 import pprint
+import pickle
 
 from message import Message
 from credentials import GoogleAuth
@@ -11,13 +11,55 @@ from credentials import GoogleAuth
 class Mail(GoogleAuth):
     """
     Represents a users mail account
+
+    attributes:
+    messages (list): list of Message objects from user inbox
+    keywords_by_msg (list): list of dictionaries where each dictionary
+    contains message id, message raw subject, and keywords from message
+    keywords (list): list of keywords derived from set of messages in inbox
+    clusters (dict): dictionary where each key is a cluster number that maps
+    to a list of messages in the cluster
+
+    to generate messages:
+    (1) get_messages
+
+    to generate clusters:
+    (1) get_messages
+    (2) generate_mail_matrix
+        (2a) if using tfidf as features instead of glove vectors, call tf_idf
+    (3) kmeans
+
+    to generate keywords:
+    (1) get_messages
+    (2) tf_idf
     """
 
-    def __init__(self, cached_mail=[], cached=False):
+    def __init__(self):
         super().__init__()
-        self.messages = [] if not cached else cached_mail
+        self.messages = []
         self.keywords_by_msg = []
-        self.clusters = None
+        self.keywords = []
+        self.clusters = {}
+
+    @staticmethod
+    def pickle_obj(object, file_name):
+        """
+        class method that pickles mail object
+        """
+        f = open(file_name, "wb")
+        pickle.dump(object, f)
+        f.close()
+
+    @staticmethod
+    def unpickle_obj(file_name):
+        """
+        if object has been pickled, unpickles and loads the object
+        file_name (str): file name of pickled object
+        """
+        f = open(file_name, "rb")
+        mail = pickle.load(f)
+        f.close()
+        return mail
 
     def get_messages(self, msg_count=50):
         inbox = (
@@ -50,7 +92,6 @@ class Mail(GoogleAuth):
                 # we can revise later if we want more body data (but might
                 # just add noise)
                 body = txt["snippet"]
-
                 # append to message to messages list
                 self.messages.append(Message(subject, body, sender, msg["id"]))
             except Exception as e:
@@ -63,27 +104,37 @@ class Mail(GoogleAuth):
         vectors (S); both are NxM where N is number of emails and M is dimension
         of GloVe vector used to encode words
         (used for prior to clustering algo)
+
+        dump_csv (bool): whether to dump matrices into csv files (for reuse)
         """
-        self.id_labels = [m.uid for m in self.messages]
         self.desc_labels = [m.raw_subject for m in self.messages]
         self.B = np.vstack([m.body_feature for m in self.messages])
         self.S = np.vstack([m.subject_feature for m in self.messages])
 
-    def k_means(self, desc_labels=True, pp=False):
+        if dump_csv:
+            np.savetxt("B.csv", self.B, delimiter=",")
+            np.savetxt("S.csv", self.S, delimiter=",")
+
+    def k_means(self, desc_labels=False, pp=False, k=4, tf_idf=False):
         """
-        desc_labels(bool): include descriptive labels (subject)
+        performs k means clustering on set of emails
+
+        desc_labels (bool): whether to include full message object or just
+        raw subject of message into cluster
         or id of messages (uid)
+        pp (bool): whether to pretty print emails by cluster
+        k (int): number of clusters
+        tf_idf (bool): whether to use tf_idf or glove vector as feature
         performs clustering on inbox
         """
-        # if not self.B and not self.S:
-        #     print("need to generate mail matrix")
-        #     return
-        labels = self.desc_labels if desc_labels else self.id_labels
+        data = self.S if not tf_idf else self.tfidf_matrix
+        labels = self.messages if desc_labels else self.desc_labels
 
-        km = KMeans(n_clusters=4).fit(self.S)
+        km = KMeans(n_clusters=k).fit(data)
+        # km.labels_ array where each element corresponds to row in self.B
+        #  matrix 0th element -> 0th row
         self.emails_by_cluster = km.labels_
 
-        # km.labels_ array where each element corresponds to row in self.B matrix 0th element -> 0th row
         # value of each element im km.labels_ is cluster number assingment
         clusters = {}
         for i in range(len(km.labels_)):
@@ -100,36 +151,69 @@ class Mail(GoogleAuth):
     def tf_idf(self, k):
         """
         using tf-idf algorithm to extract keywords for each msg in inbox
+        and generate 20 keywords for user inbox
+
+        k (int): number of keywords to generate per email
         """
         # each element of list is email message body string
         inbox_msg_bodies = [" ".join(msg.body) for msg in self.messages]
-        cv = CountVectorizer(max_df=0.75, max_features=1000, stop_words="english")
+        # column represents word in vocab, row represents email in inbox (nsamples x nfeatures)
+        tfidf_vector = TfidfVectorizer(
+            max_df=0.80, max_features=1000, stop_words="english"
+        )
+        inbox_matrix = tfidf_vector.fit_transform(inbox_msg_bodies).toarray()
+        self.tfidf_matrix = inbox_matrix
+        features = tfidf_vector.get_feature_names_out()
 
-        # column represents word in vocab, row represents email in inbox
-        word_count_matrix = cv.fit_transform(inbox_msg_bodies)
-        tfidf_transformer = TfidfTransformer()
-        tfidf_transformer.fit(word_count_matrix)
-
-        features = cv.get_feature_names_out()
-        for i in range(len(inbox_msg_bodies)):
-            msg = inbox_msg_bodies[i]
-            tfidf_vector = tfidf_transformer.transform(cv.transform([msg]))
-            tfidf_vector = np.squeeze(tfidf_vector.toarray())
-            top_features = self._extract_top_k_words(k, tfidf_vector, features)
+        for i in range(len(inbox_matrix)):
+            row = inbox_matrix[i]
+            top_features = self._extract_top_k_words(k, row, features)
             top_words = [feature[0] for feature in top_features]
-
             msg_key_words = {
                 "uid": self.messages[i].uid,
                 "subject": self.messages[i].raw_subject,
                 "keywords": top_words,
             }
+            self.messages[i].top_k_words = top_words
             self.keywords_by_msg.append(msg_key_words)
+
+        self.keywords = self._k_inbox_keywords_index(inbox_matrix, 20, features)
 
     def _extract_top_k_words(self, k, vector, features):
         """
         returns top k words from tf-idf word vector representation
         list of (word, score) sorted in descending order by score
+
+        k (int): number of keywords
+        vector (np array): tfidf feature representation of a message
+        features (np array): array where each element is a string and the index
+        corresponds to a feature (e.g., 0th element -> is the 0th tfidf feature)
         """
         top_ids = np.argsort(vector)[::-1][:k]
-        top_feats = [(features[i], vector[i]) for i in top_ids]
+        top_feats = [(features[i], vector[i]) for i in top_ids if vector[i] != 0]
         return top_feats
+
+    def _k_inbox_keywords_index(self, a, k, features):
+        """
+        from 2D numpy matrix (a)
+        (1) gets largest k indeces [i,j] (ie have the greatest tfidf score)
+        (2) as matrix is n_samples x n_features, can map indeces back to words
+        s.t a[i,j] -> features[j]
+        (3) return top k unique features using this mapping
+
+        a (np 2D array): nsample x nfeatures array
+        k (int): number of keywords
+        features (np array): array where each element is a string and the index
+        corresponds to a feature (e.g., 0th element -> is the 0th tfidf feature)
+        """
+        idx = np.argsort(a.ravel())[: -k - 1 : -1]
+        idx_lst = np.column_stack(np.unravel_index(idx, a.shape))
+
+        keywords = []
+        for pos in idx_lst:
+            i, j = pos
+            word = features[j]
+            if word not in keywords:
+                keywords.append(word)
+
+        return keywords
