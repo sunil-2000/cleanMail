@@ -1,6 +1,5 @@
 from mail import Mail
-from message import Message
-# testing run script
+import pprint
 # 1. pull emails
 # 2. preprocess / clean text
 # 3. generate features from text
@@ -17,11 +16,13 @@ messages = mail.get_messages(msg_count=50) # 50 api requests
 mail.generate_mail_matrix()
 
 # perform kMeans
-# mail.k_means()
-mail.tf_idf(20)
-# print(out)
+mail.k_means()
 
-# dump results in text file
+# perform tf_idf
+# mail.tf_idf(20)
+
+# dump results in text 
+# for each cluster, print subject line of each email in cluster
 
 
 ##### NEED TO CREATE METHOD TO PICKLE / CACHE emails , so don't have to 
