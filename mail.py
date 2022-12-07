@@ -40,6 +40,8 @@ class Mail(GoogleAuth):
         self.keywords_by_msg = []
         self.keywords = []
         self.clusters = {}
+        self.B = None # matrix of all email bodies vectorized
+        self.S = None # matrix of all email subjects vectorized
 
     @staticmethod
     def pickle_obj(object, file_name):
@@ -115,7 +117,7 @@ class Mail(GoogleAuth):
             np.savetxt("B.csv", self.B, delimiter=",")
             np.savetxt("S.csv", self.S, delimiter=",")
 
-    def k_means(self, desc_labels=False, pp=False, k=4, tf_idf=False):
+    def k_means(self, desc_labels=True, pp=False, k=4, tf_idf=False):
         """
         performs k means clustering on set of emails
 

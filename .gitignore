@@ -1,6 +1,7 @@
 venv
 token.json
 credentials.json
+data
 
 __pycache__
 .vscode
